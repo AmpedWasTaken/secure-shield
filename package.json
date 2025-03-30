@@ -6,7 +6,7 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "tsc",
-    "test": "jest --config jest.config.js",
+    "test": "jest",
     "lint": "eslint src/**/*.ts",
     "prepare": "npm run build",
     "prepublishOnly": "npm test && npm run lint",
@@ -36,7 +36,6 @@
   },
   "homepage": "https://github.com/yourusername/secure-shield#readme",
   "dependencies": {
-    "@types/express": "^5.0.1",
     "express": "^4.21.2",
     "helmet": "^7.2.0",
     "isomorphic-dompurify": "^1.13.0",
@@ -44,6 +43,7 @@
     "winston": "^3.17.0"
   },
   "devDependencies": {
+    "@types/express": "^5.0.1",
     "@types/jest": "^29.5.14",
     "@types/node": "^20.17.28",
     "@types/sqlstring": "^2.3.2",

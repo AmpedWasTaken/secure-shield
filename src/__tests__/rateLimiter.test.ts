@@ -1,48 +1,46 @@
 import { RateLimiter } from '../utils/rateLimiter';
-import { Request } from 'express';
 
 describe('RateLimiter', () => {
-    let rateLimiter: RateLimiter;
+  let rateLimiter: RateLimiter;
+  const config = {
+    windowMs: 1000,
+    maxRequests: 2
+  };
 
-    beforeEach(() => {
-        rateLimiter = new RateLimiter({
-            windowMs: 1000,
-            maxRequests: 2
-        });
-    });
+  beforeEach(() => {
+    rateLimiter = new RateLimiter(config);
+  });
 
-    afterAll(() => {
-        // Clear any remaining intervals
-        jest.clearAllTimers();
-    });
+  it('should allow requests within limit', () => {
+    const clientId = '127.0.0.1';
+    expect(rateLimiter.checkLimit(clientId)).toBe(true);
+    expect(rateLimiter.checkLimit(clientId)).toBe(true);
+  });
 
-    test('should allow requests within limit', async () => {
-        const mockReq = {
-            ip: '127.0.0.1',
-            path: '/test',
-            connection: {},
-            socket: {}
-        } as unknown as Request;
+  it('should block requests over limit', () => {
+    const clientId = '127.0.0.1';
+    expect(rateLimiter.checkLimit(clientId)).toBe(true);
+    expect(rateLimiter.checkLimit(clientId)).toBe(true);
+    expect(rateLimiter.checkLimit(clientId)).toBe(false);
+  });
 
-        const result1 = await rateLimiter.check(mockReq);
-        const result2 = await rateLimiter.check(mockReq);
+  it('should reset after window expires', async () => {
+    const clientId = '127.0.0.1';
+    expect(rateLimiter.checkLimit(clientId)).toBe(true);
+    expect(rateLimiter.checkLimit(clientId)).toBe(true);
+    expect(rateLimiter.checkLimit(clientId)).toBe(false);
+    
+    await new Promise(resolve => setTimeout(resolve, config.windowMs));
+    expect(rateLimiter.checkLimit(clientId)).toBe(true);
+  });
 
-        expect(result1).toBe(true);
-        expect(result2).toBe(true);
-    });
-
-    test('should block requests over limit', async () => {
-        const mockReq = {
-            ip: '127.0.0.1',
-            path: '/test',
-            connection: {},
-            socket: {}
-        } as unknown as Request;
-
-        await rateLimiter.check(mockReq);
-        await rateLimiter.check(mockReq);
-        const result3 = await rateLimiter.check(mockReq);
-
-        expect(result3).toBe(false);
-    });
+  it('should return correct limit info', () => {
+    const clientId = '127.0.0.1';
+    const info = rateLimiter.getLimitInfo(clientId);
+    
+    expect(info).toHaveProperty('remaining');
+    expect(info).toHaveProperty('reset');
+    expect(info).toHaveProperty('limit');
+    expect(info.limit).toBe(config.maxRequests);
+  });
 }); 

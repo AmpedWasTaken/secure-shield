@@ -10,7 +10,12 @@ export interface SanitizerOptions {
     stripSpecialChars?: boolean;
 }
 
-export class InputSanitizer {
+export interface InputSanitizer {
+    sanitize(input: string | number | boolean | Record<string, unknown>): string;
+    validate(input: string | number | boolean | Record<string, unknown>): boolean;
+}
+
+export class DefaultInputSanitizer implements InputSanitizer {
     private options: Required<SanitizerOptions>;
 
     constructor(options: SanitizerOptions = {}) {
@@ -26,12 +31,13 @@ export class InputSanitizer {
         };
     }
 
-    sanitize(input: any): string {
-        if (input === null || input === undefined) {
-            return '';
+    sanitize(input: string | number | boolean | Record<string, unknown>): string {
+        if (typeof input === 'object') {
+            return JSON.stringify(input);
         }
+        const stringInput = String(input);
 
-        let sanitized = this.convertToString(input);
+        let sanitized = this.convertToString(stringInput);
 
         // Truncate if needed
         if (this.options.maxLength > 0) {
@@ -53,6 +59,18 @@ export class InputSanitizer {
         return sanitized;
     }
 
+    validate(input: string | number | boolean | Record<string, unknown>): boolean {
+        if (typeof input === 'object') {
+            try {
+                JSON.stringify(input);
+                return true;
+            } catch {
+                return false;
+            }
+        }
+        return true;
+    }
+
     sanitizeForSQL(input: string): string {
         return sqlstring.escape(input);
     }
@@ -61,8 +79,7 @@ export class InputSanitizer {
         // First pass with DOMPurify
         let sanitized = DOMPurify.sanitize(input, {
             ALLOWED_TAGS: this.options.allowedTags,
-            ALLOWED_ATTR: Object.entries(this.options.allowedAttributes)
-                .flatMap(([_, attrs]) => attrs)
+            ALLOWED_ATTR: Object.values(this.options.allowedAttributes).flatMap(attrs => attrs)
         });
 
         // Second pass with sanitize-html for more granular control
@@ -74,11 +91,11 @@ export class InputSanitizer {
         return sanitized;
     }
 
-    private convertToString(input: any): string {
+    private convertToString(input: string | number | boolean): string {
         if (typeof input === 'string') return input;
         if (typeof input === 'number') return input.toString();
         if (typeof input === 'boolean') return input.toString();
-        if (Array.isArray(input)) return input.join(', ');
+        if (Array.isArray(input)) return (input as string[]).join(', ');
         if (typeof input === 'object') return JSON.stringify(input);
         return String(input);
     }
@@ -100,4 +117,4 @@ export class InputSanitizer {
     }
 }
 
-export default InputSanitizer; 
+export default DefaultInputSanitizer; 

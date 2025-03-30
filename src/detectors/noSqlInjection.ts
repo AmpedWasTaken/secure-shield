@@ -63,13 +63,17 @@ export class NoSQLInjectionDetector {
 
             // Recursively check nested objects
             if (typeof value === 'object' && value !== null) {
+                function isQueryObject(obj: unknown): obj is QueryObject {
+                    return typeof obj === 'object' && obj !== null;
+                }
+                
                 if (Array.isArray(value)) {
-                    value.forEach((item, index) => {
-                        if (typeof item === 'object' && item !== null) {
-                            threats.push(...this.detectObjectInjection(item as QueryObject));
+                    value.forEach((item) => {
+                        if (isQueryObject(item)) {
+                            threats.push(...this.detectObjectInjection(item));
                         }
                     });
-                } else {
+                }                 else {
                     threats.push(...this.detectObjectInjection(value as QueryObject));
                 }
             }

@@ -7,7 +7,7 @@ import { RateLimiter } from './utils/rateLimiter';
 import Logger from './utils/logger';
 import { SecurityHeaders } from './utils/securityHeaders';
 import { RequestValidator } from './utils/requestValidator';
-import { InputSanitizer } from './utils/inputSanitizer';
+import { InputSanitizer, DefaultInputSanitizer } from './utils/inputSanitizer';
 import { ConfigManager } from './utils/configManager';
 import { CryptoUtils } from './utils/cryptoUtils';
 import { 
@@ -17,8 +17,14 @@ import {
     EncryptedData,
     SQLOptions,
     NoSQLOptions,
-    PayloadOptions
+    PayloadOptions,
+    SecurityConfig,
+    ExtendedRequest
 } from './types';
+
+export interface RequestHandler {
+    (req: Request, res: Response, next: NextFunction): Promise<void> | void;
+}
 
 export class SecureShield {
     private options: Required<SecureShieldOptions>;
@@ -26,26 +32,34 @@ export class SecureShield {
     private sqlDetector: SQLInjectionDetector = new SQLInjectionDetector();
     private noSqlDetector: NoSQLInjectionDetector = new NoSQLInjectionDetector();
     private payloadDetector: PayloadDetector = new PayloadDetector();
-    private rateLimiter: RateLimiter = new RateLimiter();
+    private rateLimiter: RateLimiter;
     private logger: Logger = new Logger();
     private securityHeaders: SecurityHeaders = new SecurityHeaders();
     private requestValidator: RequestValidator = new RequestValidator();
-    private inputSanitizer: InputSanitizer = new InputSanitizer();
+    private inputSanitizer: DefaultInputSanitizer;
     private configManager = ConfigManager.getInstance();
     private cryptoUtils: CryptoUtils = new CryptoUtils();
 
-    constructor(options: SecureShieldOptions = {}) {
+    constructor(config?: SecurityConfig) {
         this.options = {
             enabled: true,
             xssOptions: {},
             sqlOptions: {},
             noSqlOptions: {},
             payloadOptions: {},
-            rateLimit: {},
+            rateLimit: {
+                windowMs: config?.rateLimiting?.windowMs || 60000,
+                maxRequests: config?.rateLimiting?.maxRequests || 100
+            },
             logging: {},
             securityHeaders: {},
-            ...options
         };
+
+        this.inputSanitizer = new DefaultInputSanitizer();
+        this.rateLimiter = new RateLimiter({
+            windowMs: config?.rateLimiting?.windowMs || 60000,
+            maxRequests: config?.rateLimiting?.maxRequests || 100
+        });
 
         this.initializeComponents();
     }
@@ -55,11 +69,9 @@ export class SecureShield {
         this.sqlDetector = new SQLInjectionDetector(this.options.sqlOptions as SQLOptions);
         this.noSqlDetector = new NoSQLInjectionDetector(this.options.noSqlOptions as NoSQLOptions);
         this.payloadDetector = new PayloadDetector(this.options.payloadOptions as PayloadOptions);
-        this.rateLimiter = new RateLimiter(this.options.rateLimit);
         this.logger = new Logger(this.options.logging);
         this.securityHeaders = new SecurityHeaders(this.options.securityHeaders);
         this.requestValidator = new RequestValidator();
-        this.inputSanitizer = new InputSanitizer();
         this.cryptoUtils = new CryptoUtils();
     }
 
@@ -77,8 +89,8 @@ export class SecureShield {
 
     private async validateRequest(req: Request): Promise<void> {
         return new Promise<void>((resolve, reject) => {
-            const nextFn: NextFunction = (error: any) => {
-                if (error) {
+            const nextFn: NextFunction = (error: unknown) => {
+                if (error instanceof Error) {
                     reject(new Error(typeof error === 'string' ? error : error.message));
                 } else {
                     resolve();
@@ -88,7 +100,7 @@ export class SecureShield {
         });
     }
 
-    middleware() {
+    middleware(): RequestHandler {
         return async (req: Request, res: Response, next: NextFunction): Promise<void> => {
             if (!this.options.enabled) {
                 next();
@@ -100,7 +112,7 @@ export class SecureShield {
                 this.securityHeaders.middleware()(req, res, () => {});
 
                 // Rate limiting check
-                const rateLimit = await this.rateLimiter.check(req);
+                const rateLimit = await this.asyncCheckRateLimit(req as ExtendedRequest);
                 if (!rateLimit) {
                     this.logger.warn('Rate limit exceeded', { ip: req.ip });
                     res.status(429).json({ error: 'Too Many Requests' });
@@ -140,8 +152,12 @@ export class SecureShield {
         };
     }
 
-    sanitize(input: string | Record<string, unknown>): string {
+    sanitizeInput(input: string | number | boolean | Record<string, unknown>): string {
         return this.inputSanitizer.sanitize(input);
+    }
+
+    validateInput(input: string | number | boolean | Record<string, unknown>): boolean {
+        return this.inputSanitizer.validate(input);
     }
 
     encrypt(data: string | Record<string, unknown>): EncryptedData {
@@ -158,6 +174,11 @@ export class SecureShield {
                 resolve(true);
             });
         });
+    }
+
+    private async asyncCheckRateLimit(req: ExtendedRequest): Promise<boolean> {
+        const clientId = this.rateLimiter.getClientId(req);
+        return this.rateLimiter.checkLimit(clientId);
     }
 }
 

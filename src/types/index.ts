@@ -1,3 +1,5 @@
+import { Request } from 'express';
+
 export interface SecurityOptions {
     enabled?: boolean;
     mode?: 'block' | 'sanitize';
@@ -40,7 +42,7 @@ export interface SecurityReport {
         topAttackers: { [key: string]: number };
         blockedRequests: number;
     };
-    details: any[];
+    details: ThreatDetection[];  // Specifiek getypt als een array van 'ThreatDetection' objecten
 }
 
 export interface LogOptions {
@@ -169,4 +171,37 @@ export interface SecurityHeadersOptions {
     contentSecurityPolicy?: {
         directives?: { [key: string]: string[] }
     } | boolean;
+}
+
+export interface SecurityRule {
+    type: string;
+    pattern: string | RegExp;
+    action: 'block' | 'sanitize' | 'log';
+    severity: 'low' | 'medium' | 'high';
+}
+
+export interface SecurityConfig {
+    customRules: SecurityRule[];
+    rateLimiting?: {
+        windowMs: number;
+        maxRequests: number;
+        message?: string;
+    };
+    // ... other config options ...
+}
+
+export interface ExtendedRequest extends Request {
+    clientIp?: string;
+}
+
+export interface RateLimitConfig {
+    windowMs: number;
+    maxRequests: number;
+    message?: string;
+}
+
+export interface RateLimitInfo {
+    remaining: number;
+    reset: number;
+    limit: number;
 } 
