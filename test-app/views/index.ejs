@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>SecureShield Test Interface</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .test-section {
+            background-color: white;
+            margin-bottom: 30px;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .response {
+            margin-top: 10px;
+            padding: 10px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+            border: 1px solid #dee2e6;
+            white-space: pre-wrap;
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        h2 {
+            color: #34495e;
+            margin-bottom: 15px;
+        }
+        input, textarea {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        button {
+            background-color: #3498db;
+            color: white;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        .error {
+            color: #e74c3c;
+            margin-top: 5px;
+        }
+        .success {
+            color: #27ae60;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h1>SecureShield Security Testing Interface</h1>
+
+    <div class="test-section">
+        <h2>User Registration</h2>
+        <form id="registerForm">
+            <input type="text" name="username" placeholder="Username">
+            <input type="password" name="password" placeholder="Password">
+            <button type="submit">Register</button>
+        </form>
+        <div id="registerResponse" class="response"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>User Login</h2>
+        <form id="loginForm">
+            <input type="text" name="username" placeholder="Username">
+            <input type="password" name="password" placeholder="Password">
+            <button type="submit">Login</button>
+        </form>
+        <div id="loginResponse" class="response"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>SQL Injection Test</h2>
+        <form id="sqlForm">
+            <input type="text" name="query" placeholder="Enter search query (try: ' OR '1'='1)">
+            <button type="submit">Search</button>
+        </form>
+        <div id="sqlResponse" class="response"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>XSS Test</h2>
+        <form id="xssForm">
+            <textarea name="comment" placeholder="Enter a comment (try: <script>alert('xss')</script>)"></textarea>
+            <button type="submit">Submit Comment</button>
+        </form>
+        <div id="xssResponse" class="response"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Sensitive Data Storage</h2>
+        <form id="sensitiveDataForm">
+            <input type="text" name="username" placeholder="Username">
+            <textarea name="sensitiveData" placeholder="Enter sensitive data to encrypt"></textarea>
+            <button type="submit">Store Encrypted Data</button>
+        </form>
+        <div id="sensitiveDataResponse" class="response"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Rate Limiting Test</h2>
+        <button id="rateLimitTest">Make Multiple Requests</button>
+        <div id="rateLimitResponse" class="response"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Token Generation</h2>
+        <button id="generateToken">Generate Security Token</button>
+        <div id="tokenResponse" class="response"></div>
+    </div>
+
+    <script>
+        // Helper function for API calls
+        async function apiCall(url, method = 'GET', data = null) {
+            try {
+                const response = await fetch(url, {
+                    method,
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: data ? JSON.stringify(data) : null
+                });
+                const result = await response.json();
+                return { status: response.status, data: result };
+            } catch (error) {
+                return { status: 500, data: { error: error.message } };
+            }
+        }
+
+        // Registration
+        document.getElementById('registerForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const response = await apiCall('/register', 'POST', {
+                username: e.target.username.value,
+                password: e.target.password.value
+            });
+            document.getElementById('registerResponse').textContent = 
+                JSON.stringify(response.data, null, 2);
+        });
+
+        // Login
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const response = await apiCall('/login', 'POST', {
+                username: e.target.username.value,
+                password: e.target.password.value
+            });
+            document.getElementById('loginResponse').textContent = 
+                JSON.stringify(response.data, null, 2);
+        });
+
+        // SQL Injection Test
+        document.getElementById('sqlForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const response = await apiCall('/search', 'POST', {
+                query: e.target.query.value
+            });
+            document.getElementById('sqlResponse').textContent = 
+                JSON.stringify(response.data, null, 2);
+        });
+
+        // XSS Test
+        document.getElementById('xssForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const response = await apiCall('/comment', 'POST', {
+                comment: e.target.comment.value
+            });
+            document.getElementById('xssResponse').textContent = 
+                JSON.stringify(response.data, null, 2);
+        });
+
+        // Sensitive Data Storage
+        document.getElementById('sensitiveDataForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const response = await apiCall('/store-sensitive', 'POST', {
+                username: e.target.username.value,
+                sensitiveData: e.target.sensitiveData.value
+            });
+            document.getElementById('sensitiveDataResponse').textContent = 
+                JSON.stringify(response.data, null, 2);
+        });
+
+        // Rate Limiting Test
+        document.getElementById('rateLimitTest').addEventListener('click', async () => {
+            const responses = [];
+            for (let i = 0; i < 10; i++) {
+                const response = await apiCall('/api/data');
+                responses.push(`Request ${i + 1}: ${response.status} ${JSON.stringify(response.data)}`);
+                document.getElementById('rateLimitResponse').textContent = responses.join('\n');
+            }
+        });
+
+        // Token Generation
+        document.getElementById('generateToken').addEventListener('click', async () => {
+            const response = await apiCall('/generate-token', 'POST');
+            document.getElementById('tokenResponse').textContent = 
+                JSON.stringify(response.data, null, 2);
+        });
+    </script>
+</body>
+</html> 

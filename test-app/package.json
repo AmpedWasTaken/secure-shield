@@ -1,0 +1,19 @@
+{
+  "name": "secure-shield-test-app",
+  "version": "1.0.0",
+  "description": "Test application for secure-shield",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "express": "^4.17.1",
+    "express-session": "^1.18.1",
+    "mysql2": "^3.14.0"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "nodemon": "^2.0.22"
+  }
+}

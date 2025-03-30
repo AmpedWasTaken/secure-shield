@@ -1,0 +1,3 @@
+# Contributing to SecureShield
+
+We love your input! We want to make contributing to SecureShield as easy and transparent as possible... 
