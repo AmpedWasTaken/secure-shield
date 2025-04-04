@@ -10,7 +10,8 @@
   "dependencies": {
     "express": "^4.17.1",
     "express-session": "^1.18.1",
-    "mysql2": "^3.14.0"
+    "mysql2": "^3.14.0",
+    "secure-shield": "^1.0.0"
   },
   "devDependencies": {
     "jest": "^29.7.0",

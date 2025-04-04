@@ -1,5 +1,5 @@
 const express = require('express');
-const { SecureShield } = require('../dist/index');
+const { SecureShield } = require('secure-shield');
 const bodyParser = require('body-parser');
 const mysql = require('mysql2/promise');
 const session = require('express-session');
@@ -94,15 +94,15 @@ app.post('/api/users/register', async (req, res) => {
         const { username, password, email } = req.body;
         
         // Sanitize inputs
-        const sanitizedUsername = shield.sanitize(username);
-        const sanitizedEmail = shield.sanitize(email);
+        const sanitizedUsername = shield.sanitizeInput(username);
+        const sanitizedEmail = shield.sanitizeInput(email);
         
         // Hash password
         const hashedPassword = await shield.cryptoUtils.hashPassword(password);
         
         const [result] = await pool.query(
             'INSERT INTO users (username, password, email) VALUES (?, ?, ?)',
-            [sanitizedUsername, hashedPassword, sanitizedEmail]
+            [sanitizedUsername, hashedPassword.hash, sanitizedEmail]
         );
 
         res.json({ 
@@ -153,8 +153,8 @@ app.post('/api/posts', async (req, res) => {
         const { title, content } = req.body;
         
         // Sanitize inputs
-        const sanitizedTitle = shield.sanitize(title);
-        const sanitizedContent = shield.sanitize(content);
+        const sanitizedTitle = shield.sanitizeInput(title);
+        const sanitizedContent = shield.sanitizeInput(content);
         
         const [result] = await pool.query(
             'INSERT INTO posts (user_id, title, content) VALUES (?, ?, ?)',
