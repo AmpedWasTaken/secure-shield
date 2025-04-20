@@ -1,6 +1,6 @@
 {
   "name": "secure-shield",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "A comprehensive security middleware package for Node.js applications",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
