@@ -29,12 +29,12 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/yourusername/secure-shield.git"
+    "url": "git+https://github.com/ampedwastaken/secure-shield.git"
   },
   "bugs": {
-    "url": "https://github.com/yourusername/secure-shield/issues"
+    "url": "https://github.com/ampedwastaken/secure-shield/issues"
   },
-  "homepage": "https://github.com/yourusername/secure-shield#readme",
+  "homepage": "https://github.com/ampedwastaken/secure-shield#readme",
   "dependencies": {
     "express": "^4.21.2",
     "helmet": "^7.2.0",
