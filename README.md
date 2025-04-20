@@ -284,15 +284,11 @@ We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) f
 3. Commit your changes
 4. Push to the branch
 5. Create a Pull Request
-
-## 🔏 Security Policy
-
-Please report security vulnerabilities to security@secure-shield.dev instead of creating public issues.
-
+6. 
 ## 📄 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ---
 
-Made with ❤️ by the SecureShield Team 
+Made with ❤️ by Amped
